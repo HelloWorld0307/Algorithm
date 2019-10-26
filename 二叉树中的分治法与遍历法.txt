@@ -1,0 +1,62 @@
+题目：给一棵二叉树，找出从根节点到叶子节点的所有路径。
+样例
+样例 1:
+输入：{1,2,3,#,5}
+输出：["1->2->5","1->3"]
+解释：
+   1
+ /   \
+2     3
+ \
+  5
+
+public class Solution {
+    List<String> result = new ArrayList<String>();
+    public List<String> binaryTreePaths(TreeNode root) {
+        if(root == null) {
+            return result;
+        }
+        helper(root, String.valueOf(root.val));
+        return result;
+    }
+    
+    // 递归法：每往下走一次就要把遍历到的节点接到结果字符串后面去，这样找到叶子节点后就可以加入到result里了
+    void helper(TreeNode root, String path) {
+        if(root == null) {
+            return;
+        }
+        if(root.left == null && root.right == null) {
+            result.add(path);
+            return;
+        }
+        if(root.left != null) {
+            helper(root.left, path + "->" + root.left.val);
+        }
+        if(root.right != null) {
+            helper(root.right, path + "->" + root.right.val);
+        }
+    }
+}
+
+// 分治法：分治法其实是从底往根节点走，每次遍历走到叶子节点后就将两个叶子节点和根节点组装在一起成为放到
+//         root.val + "->" + root.left.val, 一共有几个叶子节点就有几个路径
+public class Solution {
+    public List<String> binaryTreePaths(TreeNode root) {
+        List<String> paths = new ArrayList<>();
+        if(root == null) {
+            return paths;
+        }
+        List<String> leftPaths = binaryTreePaths(root.left);
+        List<String> rightPaths = binaryTreePaths(root.right);
+        
+        for(String path: leftPaths) {
+            paths.add(root.val +"->" + path);
+        }
+        for(String path: rightPaths) {
+            paths.add(root.val +"->" + path);
+        }
+        if(paths.size() == 0) {
+            paths.add("" + root.val);
+        }
+        return paths;
+    }
