@@ -157,3 +157,71 @@ public class Solution {
         }
         return paths;
     }
+}
+
+
+
+597. 具有最大平均数的子树
+给一棵二叉树，找到有最大平均值的子树。返回子树的根结点。
+
+样例
+输入：
+{1,-5,11,1,2,4,-2}
+输出：11
+说明:
+这棵树如下所示：
+     1
+   /   \
+ -5     11
+ / \   /  \
+1   2 4    -2 
+11子树的平均值是4.333，为最大的。
+
+// 思想：使用分治法 + 全局变量
+//      分治法是从树的最底层往上遍历，肯定是遍历到了最左叶子节点，使用全局变量记录遍历到的节点的最大平均值，注意：思路不能陷入拿root节点和其左右
+//      节点对比，而是要拿每一次遍历到的全局变量去对比，如果大于全局变量则记录最大值同时目标节点应该为当前节点
+
+class ResultType{
+    public int sum;  // 当前根节点所有的节点总和
+    public int nodeCount; // 目前整个子树中总节点数量
+    
+    public ResultType(int sum, int nodeCount) {
+        this.sum = sum;
+        this.nodeCount = nodeCount;
+    }
+}
+// 返回ResultType方法 == 分治法
+public class Solution {
+    /**
+     * @param root: the root of binary tree
+     * @return: the root of the maximum average of subtree
+     */
+    private TreeNode target = null;  // 每一次遍历找到的临时目标节点然后和上一层对比
+    private ResultType tempResult = null;
+    public TreeNode findSubtree2(TreeNode root) {
+        // write your code here
+        helper(root);
+        return target;
+    }
+    
+    // 方法的定义：找到当前节点的节点总节点数量，总值和，当前节点，最后求的平均值和左右子树对比
+    // 注意⚠️：不能使用左右子树先比，找到大的在和root相比，如果左边大于root，那根节点的target值就为left了，但此时根节点的sum 和count还是原来的，
+    //         如果往下走和right比较还是那原来的比较，这样就会出问题
+    ResultType helper(TreeNode root){
+        if(root == null) {
+            return new ResultType(0, 0);
+        }
+        ResultType left = helper(root.left);
+        ResultType right = helper(root.right);
+
+        // 当前root节点的下的值
+        ResultType result = new ResultType(left.sum + right.sum + root.val,
+                                            left.nodeCount + right.nodeCount + 1);
+        // 使用tempResult打擂台
+        if(target == null || result.sum * tempResult.nodeCount > result.nodeCount *  tempResult.sum) {
+            target = root;
+            tempResult = result;
+        }
+        return result;
+    }
+}
