@@ -328,7 +328,7 @@ public class Solution {
     }
 }
 
-88. 最近公共祖先
+88. 最近公共祖先（常考）
 给定一棵二叉树，找到两个节点的最近公共父节点(LCA)。
 最近公共祖先是两个节点的公共的祖先节点且具有最大深度。
 样例
@@ -382,5 +382,194 @@ public class Solution {
             return right;
         }
         return null;
+    }
+}
+
+
+453. 将二叉树拆成链表（常考）
+将一棵二叉树按照前序遍历拆解成为一个 假链表。所谓的假链表是说，用二叉树的 right 指针，来表示链表中的 next 指针。
+
+样例
+
+输入：{1,2,5,3,4,#,6}
+输出：{1,#,2,#,3,#,4,#,5,#,6}
+解释：
+     1
+    / \
+   2   5
+  / \   \
+ 3   4   6
+ 
+1
+\
+ 2
+  \
+   3
+    \
+     4
+      \
+       5
+        \
+         6
+
+
+// 思路：从最右边的叶子节点开始记录，将整个整理好的右子树全部接在左子树中的最右节点，
+//       将其左节置为空，使用prev变量记录刚刚已经整理好的节点，以便拼接在下一个节点的右子树上
+// 最好走一遍代码
+// 递归
+
+public class Solution {
+         
+    TreeNode prev = null;
+    public void flatten(TreeNode root) {
+        // write your code here
+        if(root == null) {
+            return;
+        }
+        flatten(root.right);
+        flatten(root.left);
+        root.left = null;
+        root.right = prev;
+        prev = root;
+    }
+}
+
+106. 有序链表转换为二分查找树
+中文English
+给出一个所有元素以升序排序的单链表，将它转换成一棵高度平衡的二分查找树
+
+样例
+样例 1:
+	输入: array = 1->2->3
+	输出:
+		 2  
+		/ \
+		1  3
+
+//思路： 题目提到了平衡二叉树，那么就将链表重中间分开，首节点为根节点，从 size / 2 处分开，
+//      那么左右两部分就是首节点为根结点的二叉树的左右子树，然后将分成两部分的链表每一部分再继续分两半知道 size <= 0
+
+public class Solution {
+    /*
+     * @param head: The first node of linked list.
+     * @return: a tree node
+     */
+    private ListNode current;
+    
+    private int getSize(ListNode head) {
+        int size = 0;
+        while(head != null) {
+            size++;
+            head = head.next;
+        }
+        return size;
+    }
+    
+    public TreeNode sortedListToBST(ListNode head) {
+        // write your code here
+        int size = 0;
+        current = head;
+        size = getSize(head);
+        return helper(size);
+        
+    }
+    
+    private TreeNode helper(int size) {
+        // 当size = 0的时候说明此时的链表节点为对应的二叉树的叶子节点
+        if(size <= 0) {
+            return null;
+        }
+        TreeNode left = helper(size / 2);
+        // 拿到当前head节点的值，生成一个TreeNode节点
+        TreeNode root = new TreeNode(current.val);
+        current = current.next;
+        // 计算左边长度的时候要记住剪掉首节点也就是根节点的个数1
+        TreeNode right = helper(size - 1 - size / 2);
+        // 合并：最后求得的left 和right就是当前root为根的左右子树
+        root.left = left;
+        root.right = right;
+        return root;
+    }
+}
+
+
+902. BST中第K小的元素
+给一棵二叉搜索树，写一个 KthSmallest 函数来找到其中第 K 小的元素。
+
+样例
+
+输入：{1,#,2},2
+输出：2
+解释：
+	1
+	 \
+	  2
+第二小的元素是2。
+
+// 思路：BST是一个左子树最大节点永远小于根节点，右子树所有的最小的节点大于根节点
+// 方法一：使用中序遍历，找到最左节点后往上返回一次就计数一次，当count 等于k就是目标值了
+// 方法二：使用中序遍历求得遍历后的数组，然后get(k)即为目标值
+public class Solution {
+    int count = 0;
+    int kCount;
+    int target;
+
+    public int kthSmallest(TreeNode root, int k) {
+        // write your code here
+        kCount = k;
+        helper(root);
+        return target;
+    }
+    
+    void helper(TreeNode root) {
+        if(root == null) {
+            return;
+        }
+        helper(root.left);
+        count++;
+        if(count == kCount){
+            target = root.val;
+        }
+        helper(root.right);
+    }
+}
+
+//思路：如果涉及到多次查询的话，先使用分治法把每一个节点，以节点对象本身作为key，左右子树加上根基作为value存入map中， 
+//     在定位的时候直接中map中间查询即可，那么接下来的查询将是非常快的
+public class Solution {
+   
+    public int kthSmallest(TreeNode root, int k) {
+        // write your code here
+        Map<TreeNode, Integer> countedHashMap = new HashMap<>();
+        countNodes(root, countedHashMap);
+        return quickSelect(root, countedHashMap, k);
+    }
+
+    // 统计每一个节点的左右子树总和
+    int countNodes(TreeNode root, Map<TreeNode, Integer> countedHashMap) {
+        if(root == null) {
+            return 0;
+        }
+        int left = countNodes(root.left, countedHashMap);
+        int right = countNodes(root.right, countedHashMap);
+        countedHashMap.put(root, left + right + 1);
+        return left + right + 1;
+    }
+
+    // 对每个节点统计过左右子树和，例如当前节点root有n个子节点，如果k <= n 则继续往子树的左边找，n + 1 = k则说明当前节点就是目标节点，
+    // 因为左子树的所有节点加1等于根节点，说明根根节点就是第k个节点；其他的情况就是就往右找，但是此时要考虑到右边节点的个数在内， 
+    // 在左边节点要到第 k - left - 1小的节点这样依次遍历
+    int quickSelect(TreeNode root, Map<TreeNode, Integer> countedHashMap, int k) {
+        if(root == null) { // 做题的时候纠结了返回值
+            return -1;
+        }
+        int left = root.left == null? 0 : countedHashMap.get(root.left);
+        if(left >= k) {
+            return quickSelect(root.left, countedHashMap, k);
+        }
+        if(left + 1 == k) { //这里没有想到
+            return root.val;
+        }
+        return quickSelect(root.right, countedHashMap, k - left - 1); // 这里是重点
     }
 }
