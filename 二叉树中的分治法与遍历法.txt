@@ -280,7 +280,7 @@ public class Solution {
 这是二叉查找树。
 
 
-// 思路：使用分治法分别判断根节点的左右子树的是否为BST，最大值，最小值
+// 思路一：使用分治法分别判断根节点的左右子树的是否为BST，最大值，最小值
 //       拿下一层求得的左子树的最大值以及右子树的最小值分别和根结点对比
 // ResultType定义：一个节点是不是BST，左子树最大值，右子树最小值
 class ResultType{
@@ -306,7 +306,7 @@ public class Solution {
         return result.isBST;
     }
     ResultType helper(TreeNode root) {
-        // 重点1：分治法的退出条件之一，当节点为空的时候也是一个BST，且最大最小值分分别为无穷小和务穷大
+        // 重点1：分治法的退出条件之一，当节点为空的时候也是一个BST，且最大最小值分别为无穷小和无穷大
         if(root == null) {
             return new ResultType(true, Integer.MIN_VALUE, Integer.MAX_VALUE);
         }
@@ -315,7 +315,7 @@ public class Solution {
         if(!left.isBST || !right.isBST) {
             return new ResultType(false, 0, 0);
         }
-        // 重点2：当前节点不为左子树不为空才去判断左边的最大值是否大于根节点，右节点相识
+        // 重点2：当前节点左子树不为空才去判断左边的最大值是否大于根节点，右节点同样操作
         if((root.left != null && left.maxValue >= root.val) || 
            (root.right != null && right.minValue <= root.val)) {
             return new ResultType(false, 0, 0);
@@ -325,6 +325,32 @@ public class Solution {
                                                 Math.max(root.val, right.maxValue), 
                                                 Math.min(root.val, left.minValue));
         return returnResult;
+    }
+}
+
+// 思路二：将树分成两半做校验，左边一般取值范围为(min， root.val),
+//       右边取(root.val, max)，如果有一个不符合要求就返回false
+public class Solution {
+    /**
+     * @param root: The root of binary tree.
+     * @return: True if the binary tree is BST, or false
+     */
+    public boolean isValidBST(TreeNode root) {
+        // write your code here
+        return helper(root, Long.MIN_VALUE, Long.MAX_VALUE);
+    }
+    // 重点1:要使用long
+    boolean helper(TreeNode root, long min, long max) {
+        if(root == null) {
+            return true;
+        }
+        if(root.val <= min || root.val >= max) {
+            return false;
+        }
+        // 重点2:将树分成两半的时候取范围，左边：最大值为root
+        boolean left = helper(root.left, min, (long)root.val);
+        boolean right = helper(root.right, (long)root.val, max);
+        return left && right;
     }
 }
 
