@@ -411,6 +411,29 @@ public class Solution {
     }
 }
 
+67. 二叉树的中序遍历
+// 思路（非递归）：中序遍历，按照左中右顺序，拿到一个节点后先一直遍历到最左节点，每一次寻找左节点都将当前root节点push金stack中，
+//      这样方便在找到左节点后继续找中节点，最后一个节点的左中都找到了，就开始找右节点
+public class Solution {
+    
+    public List<Integer> inorderTraversal(TreeNode root) {
+        // write your code here
+        TreeNode cur = root;
+        List<Integer> result = new ArrayList<>();
+        Stack<TreeNode> stack = new Stack<>();
+        while(cur != null || !stack.empty()) {
+            while(cur != null) {
+                stack.push(cur);
+                cur = cur.left;
+            }
+            cur = stack.pop();
+            result.add(cur.val);
+            // 左中都找到了后就开始找右节点了
+            cur = cur.right;
+        }
+        return result;
+    }
+
 
 453. 将二叉树拆成链表（常考）
 将一棵二叉树按照前序遍历拆解成为一个 假链表。所谓的假链表是说，用二叉树的 right 指针，来表示链表中的 next 指针。
@@ -710,5 +733,140 @@ public class Solution {
              root = root.left;
         }
         return root;
+    }
+}
+
+900. 二叉搜索树中最接近的值
+给一棵非空二叉搜索树以及一个target值，找到在BST中最接近给定值的节点值
+样例
+
+输入: root = {5,4,9,2,#,8,10} and target = 6.124780
+输出: 5
+解释：
+二叉树 {5,4,9,2,#,8,10}，表示如下的树结构：
+        5
+       / \
+     4    9
+    /    / \
+   2    8  10
+
+// 思想：求出 lowerBound 和 upperBound。即 < target 的最大值和 >= target 的最小值。
+//      然后在两者之中去比较谁更接近，然后返回即可。（背）
+// 注意：时间复杂度为 O(h)O(h)，注意如果你使用 in-order traversal 的化，时间复杂度会是 o(n)o(n) 
+// 并不是最优的。另外复杂度也不是 O(logn)O(logn) 因为BST 并不保证树高是 logn 的。
+public class Solution {
+    /**
+     * @param root: the given BST
+     * @param target: the given target
+     * @return: the value in the BST that is closest to the target
+     */
+    public int closestValue(TreeNode root, double target) {
+        if(root == null) {
+            return 0;
+        }
+        // write your code here
+        TreeNode left = lowerBound(root, target);
+        TreeNode right = upperBound(root, target);
+        if(left == null) {
+            return right.val;
+        }
+        if(right == null) {
+            return left.val;
+        }
+        if (target - left.val > right.val - target) {
+            return right.val;
+        }
+        return Math.abs(left.val - target) > Math.abs(right.val - target) ? right.val : left.val;
+     }
+     // 求小于target的最大值
+    TreeNode lowerBound(TreeNode root, double target){
+        if(root == null) {
+            return null;
+        }
+        // root大于target说明target在root的左边，往左边继续找到
+        if(root.val >= target) {
+            return lowerBound(root.left, target);
+        }
+        // root.val < target的情况
+        TreeNode value = lowerBound(root.right, target);
+        if(value != null) {
+            return value;
+        }
+        return root;
+    }
+    // 求大于target的最小值
+    TreeNode upperBound(TreeNode root, double target) {
+        if(root == null) {
+            return null;
+        }
+        if(root.val <= target){
+            return upperBound(root.right, target);
+        }
+        // root.val >= target的情况
+        TreeNode result = upperBound(root.left, target);
+        if(result != null) {
+            return result;
+        }
+        return root;
+    }
+}
+
+901. 二叉搜索树中最接近的值 II （困难级）
+给定一棵非空二叉搜索树以及一个target值，找到 BST 中最接近给定值的 k 个数。
+https://www.lintcode.com/problem/closest-binary-search-tree-value-ii/
+https://www.jiuzhang.com/solution/closest-binary-search-tree-value-ii/
+
+public class Solution {
+
+    public List<Integer> closestKValues(TreeNode root, double target, int k) {
+        // write your code here
+        List<Integer> list = new ArrayList<>();
+
+        //使用中序遍历出递增的list
+        inorderTravers(root, list);
+
+        // 使用二分法找到第一个小于等于target的值
+        int start = 0; 
+        int end = list.size() - 1;
+        int index;
+        while(start + 1 < end) {
+            int mid = start + (end - start) / 2;
+            if(list.get(mid) >= target) {
+                end = mid;
+            }else{
+                start = mid;
+            }
+        }
+        if(list.get(start) >= target){
+            index = start;
+        }else {
+            index = end;
+        }
+        
+        int n = list.size();
+        int left = index - 1, right = index;
+        List<Integer> result = new ArrayList<>();
+        // 题目要求找到k个值，所以只需要移动k次，每移动一次就判断left 和right谁离target值近，谁近谁加入到list中，
+        // 同时往左或右移动一次，往左走的条件是左指针 还没有或者刚到开始节点，同时右指针已经到达尾部或超过尾部或者右指针比左指针离的近
+        for (int i = 0; i < k; i++) {
+            if (left >= 0 && (right >= n || target - list.get(left) < list.get(right) - target)) {
+                result.add(list.get(left));
+                left--;
+            } else {
+                result.add(list.get(right));
+                right++;
+            }
+        }
+        return result;
+    }
+
+    //使用中序遍历出递增的list
+    void inorderTravers(TreeNode root, List<Integer> list) {
+        if(root == null) {
+            return;
+        }
+        inorderTravers(root.left, list);
+        list.add(root.val);
+        inorderTravers(root.right, list);
     }
 }
