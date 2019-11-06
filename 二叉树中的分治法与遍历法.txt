@@ -411,29 +411,108 @@ public class Solution {
     }
 }
 
-67. 二叉树的中序遍历
-// 思路（非递归）：中序遍历，按照左中右顺序，拿到一个节点后先一直遍历到最左节点，每一次寻找左节点都将当前root节点push金stack中，
-//      这样方便在找到左节点后继续找中节点，最后一个节点的左中都找到了，就开始找右节点
+66. 二叉树的前序遍历
+给出一棵二叉树，返回其节点值的前序遍历。
+
+
 public class Solution {
-    
+    /**
+     * @param root: A Tree
+     * @return: Preorder in ArrayList which contains node values.
+     */
+    public List<Integer> preorderTraversal(TreeNode root) {
+        // write your code here
+        Stack<TreeNode> stack = new Stack<>();
+        List<Integer> list = new ArrayList<>();
+        if(root != null){
+            stack.push(root);
+        }
+        while(!stack.empty()) {
+            TreeNode cur = stack.pop();
+            list.add(cur.val);
+            if(cur.right != null) {
+                stack.push(cur.right);
+            }
+            if(cur.left != null) {
+                stack.push(cur.left);
+            }
+        }
+        return list;
+    }
+}
+
+
+67. 二叉树的中序遍历
+// 思路（非递归）：先把最左边全都加进stack，然后开始pop，每pop一次检查：
+// 1.右边为空就一直pop；
+// 2.不为空就去右边，然后再一次将左边的一条下来全加进stack里。重复该过程。
+public class Solution {
+    /**
+     * @param root: A Tree
+     * @return: Inorder in ArrayList which contains node values.
+     */
     public List<Integer> inorderTraversal(TreeNode root) {
         // write your code here
-        TreeNode cur = root;
-        List<Integer> result = new ArrayList<>();
         Stack<TreeNode> stack = new Stack<>();
-        while(cur != null || !stack.empty()) {
-            while(cur != null) {
-                stack.push(cur);
-                cur = cur.left;
-            }
-            cur = stack.pop();
-            result.add(cur.val);
-            // 左中都找到了后就开始找右节点了
-            cur = cur.right;
+        List<Integer> list = new ArrayList<>();
+        
+        while(root != null) {
+            stack.push(root);
+            root = root.left;
         }
-        return result;
+        
+        while(!stack.empty()){
+            TreeNode cur = stack.pop();
+            list.add(cur.val);
+            if(cur.right != null) {
+                TreeNode node = cur.right;
+                while(node != null) {
+                    stack.push(node);
+                    node = node.left;
+                }
+            }
+        }
+        return list;
     }
+}
 
+68.二叉后序遍历
+// 思想：将正常的后序遍历步骤左右中，push进stack的顺序是右左，最后再反转一次最终的list结果即可，
+// revser方法虽然是o(n)但是再while循环外面
+public class Solution {
+    /*
+     * @param root: A Tree
+     * @return: Postorder in ArrayList which contains node values.
+     */
+    public List<Integer> postorderTraversal(TreeNode root) {
+
+        List<Integer> results = new ArrayList<Integer>();
+        Stack<TreeNode> stack = new Stack<TreeNode>();
+        
+        if (root == null) {
+            return results;
+        }
+        stack.push(root);
+
+        while (!stack.empty()) {
+            TreeNode curNode = stack.pop();
+
+            results.add(curNode.val);
+
+            if (curNode.left != null) {
+                stack.push(curNode.left);
+            }
+
+            if (curNode.right != null) {
+                stack.push(curNode.right);
+            }
+        }
+        
+        Collections.reverse(results);
+        
+        return results;
+    }
+}
 
 453. 将二叉树拆成链表（常考）
 将一棵二叉树按照前序遍历拆解成为一个 假链表。所谓的假链表是说，用二叉树的 right 指针，来表示链表中的 next 指针。
@@ -964,5 +1043,80 @@ public class Solution {
         inorderTravers(root.left, list);
         list.add(root.val);
         inorderTravers(root.right, list);
+    }
+}
+
+87. 删除二叉查找树的节点
+给定一棵具有不同节点值的二叉查找树，删除树中与给定值相同的节点。如果树中没有相同值的节点，就不做任何处理。你应该保证处理之后的树仍是二叉查找树。
+
+样例
+
+输入: 
+Tree = {5,3,6,2,4}
+k = 3
+输出: {5,2,6,#,4} 或 {5,4,6,2}
+说明:
+给定了以下二叉搜索树:
+    5
+   / \
+  3   6
+ / \
+2   4
+移去3，你可以返回:
+    5
+   / \
+  2   6
+   \
+    4
+或
+    5
+   / \
+  4   6
+ /
+2
+
+// 思路：通过root和value对比，找到目标节点target，找到后删除目标节点
+// 找到目标节点后要分target为叶子节点，只有右子树，只有左子树三种情况
+// 为叶子节点：直接删除
+// 只有右子树：返回右节点
+// 只有左子树：返回左节点
+// 左右子树都有：找到该右子树中最小值，将当前节点的val换成其右子树中最小值val，然后在删除当前节点右子树中最小值，
+// 最后循环调用删除方法，删除右子树的最小值的步骤还是将当前最小值的右子树中最小值分赋值给上一个最小值，在删除该最小值，这样循环往复即可
+
+public class Solution {
+    /*
+     * @param root: The root of the binary search tree.
+     * @param value: Remove the node with given value.
+     * @return: The root of the binary search tree after removal.
+     */
+    public TreeNode removeNode(TreeNode root, int value) {
+        // write your code here
+        if(root == null) {
+            return null;
+        }
+        if(root.val > value) { // 往左边找, 在root的左子树中找，如果找到了就可以直接把最后的结果赋给当前根节点root，
+            root.left = removeNode(root.left, value);
+        }else if(root.val < value){ // 往右边找
+            root.right = removeNode(root.right, value);
+        }else { // 找到了目标位置
+            if(root.left == null) {
+                return root.right;
+            }
+            if(root.right == null) {
+                return root.left;
+            }
+            // 目标节点左右子树都不为空的情况
+            // 将目标节点置换为其右子树中最小的值，然后相同操作继续往右子树中走
+            root.val = findMinVal(root.right).val;  //找到右子树中最小值
+            root.right = removeNode(root.right, root.val); //因为上一步求的最小值其实在以root为根的树中右来两个，所以需要干掉其右子树的相同的节点
+        }
+        return root;
+    }
+    
+    private TreeNode findMinVal(TreeNode root) {
+        while(root.left != null) {
+            root = root.left;
+        }
+        return root;
     }
 }
