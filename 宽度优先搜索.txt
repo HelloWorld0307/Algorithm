@@ -14,6 +14,26 @@
 3，需要分层的算法比不需要分层的算法多一个循环 size=queue.size()
 如果直接 for (int i = 0; i < queue.size(); i++) 会怎么样?
 
+什么时候需要序列化?
+1. 将内存中的数据持久化存储时
+内存中重要的数据不能只是呆在内存里，这样断电就没有了，所需需要用一种方式写入硬盘，在需要的 时候，能否再从硬盘中读出来在内存中重新创建
+2. 网络传输时 机器与机器之间交换数据的时候，不可能互相去读对方的内存。只能讲数据变成字符流数据(字符串)后
+通过网络传输过去。接受的一方再将字符串解析后到内存中。
+常用的一些序列化手段:
+• XML
+• Json
+• Thrift (by Facebook)
+• ProtoBuf (by Google)
+
+一些序列化的例子:
+• 比如一个数组，里面都是整数，我们可以简单的序列化为”[1,2,3]”
+• 一个整数链表，我们可以序列化为，”1->2->3”
+• 一个哈希表(HashMap)，我们可以序列化为，”{\”key\”: \”value\”}”
+序列化算法设计时需要考虑的因素:
+• 压缩率。对于网络传输和磁盘存储而言，当然希望更节省。
+• 如 Thrift, ProtoBuf 都是为了更快的传输数据和节省存储空间而设计的。
+• 可读性。我们希望开发人员，能够通过序列化后的数据直接看懂原始数据是什么。
+• 如 Json，LintCode 的输入数据
 
 69. 二叉树的层次遍历
 给出一棵二叉树，返回其节点值的层次遍历（逐层从左往右访问）
@@ -59,6 +79,248 @@ public class Solution {
                 }
             }
             result.add(currentList);
+        }
+        return result;
+    }
+}
+
+
+70. 二叉树的层次遍历 II
+给出一棵二叉树，返回其节点值从底向上的层次序遍历（按从叶节点所在层到根节点所在的层遍历，然后逐层从左往右遍历）
+
+样例
+
+输入:
+{3,9,20,#,#,15,7}
+输出:
+[[15,7],[9,20],[3]]
+解释:
+    3
+   / \
+  9  20
+    /  \
+   15   7
+它将被序列化为 {3,9,20,#,#,15,7}
+层次遍历
+
+思路： 按照正常的从上到下遍历后，使用cellections.reverse取反之后直接返回即可
+
+public class Solution {
+    /**
+     * @param root: A tree
+     * @return: buttom-up level order a list of lists of integer
+     */
+    public List<List<Integer>> levelOrderBottom(TreeNode root) {
+        // write your code here
+        List<List<Integer>> result = new ArrayList<>();
+        Queue<TreeNode> queue = new LinkedList<>();
+        if(root == null) {
+            return result;
+        }
+        queue.offer(root);
+        while(!queue.isEmpty()) {
+            int size = queue.size();
+            List<Integer> cur = new ArrayList<>();
+            for(int i = 0; i < size; i++) {
+                TreeNode node = queue.poll();
+                cur.add(node.val);
+                if(node.left != null) {
+                    queue.offer(node.left);
+                }
+                if(node.right != null){
+                    queue.offer(node.right);
+                }
+            }
+            result.add(cur);
+        }
+        // 返回之前使用对结果取反即可
+        Collections.reverse(result);
+        return result;
+    }
+}
+
+
+
+71. 二叉树的锯齿形层次遍历
+给出一棵二叉树，返回其节点值的锯齿形层次遍历（先从左往右，下一层再从右往左，层与层之间交替进行） 
+
+样例
+
+输入:{3,9,20,#,#,15,7}
+输出:[[3],[20,9],[15,7]]
+解释:
+    3
+   / \
+  9  20
+    /  \
+   15   7
+它将被序列化为 {3,9,20,#,#,15,7}
+
+思路：在普通的层次遍历中加入一个标志位，遍历下一行时从list的头插入
+
+public class Solution {
+    /**
+     * @param root: A Tree
+     * @return: A list of lists of integer include the zigzag level order traversal of its nodes' values.
+     */
+    public List<List<Integer>> zigzagLevelOrder(TreeNode root) {
+        // write your code here
+        List<List<Integer>> result = new ArrayList<>();
+        if(root == null) {
+            return result;
+        }
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+        boolean isReverse = true;
+        while(!queue.isEmpty()){
+            int size = queue.size();
+            List<Integer> cur = new ArrayList<>();
+            for(int i = 0; i < size; i++) {
+                TreeNode node = queue.poll();
+                // 将队列poll出来的是放入cur中
+                if(isReverse) {
+                    cur.add(node.val);
+                }else {
+                    cur.add(0, node.val);
+                }
+                if(node.left != null) {
+                    queue.offer(node.left);
+                }
+                if(node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+            result.add(cur);
+            isReverse = isReverse ? false : true;
+        }
+        return result;
+    }
+}
+
+
+7. 二叉树的序列化和反序列化
+设计一个算法，并编写代码来序列化和反序列化二叉树。将树写入一个文件被称为“序列化”，读取文件后重建同样的二叉树被称为“反序列化”。
+
+如何反序列化或序列化二叉树是没有限制的，你只需要确保可以将二叉树序列化为一个字符串，并且可以将字符串反序列化为原来的树结构。
+
+样例
+
+输入：{3,9,20,#,#,15,7}
+输出：{3,9,20,#,#,15,7}
+解释：
+二叉树 {3,9,20,#,#,15,7}，表示如下的树结构：
+	  3
+	 / \
+	9  20
+	  /  \
+	 15   7
+它将被序列化为 {3,9,20,#,#,15,7}
+
+public class Solution {
+    public String serialize(TreeNode root) {
+        // write your code here
+        if(root == null) {
+            return "";
+        }
+        return serializeHelper(root);
+    }
+    
+    private String serializeHelper(TreeNode root) {
+        if(root == null) {
+            return "#,";
+        }
+        String leftStr = serializeHelper(root.left);
+        String rightStr = serializeHelper(root.right);
+        return root.val + "," + leftStr + rightStr;
+    }
+
+    public TreeNode deserialize(String data) {
+        // write your code here
+        if (data == null || data.isEmpty()) {
+             return null;
+        }
+        Queue<String> queue = new LinkedList<>(Arrays.asList(data.split(",")));
+        return deserializeHelper(queue);
+    }
+    
+    private TreeNode deserializeHelper(Queue<String> queue){
+        String value = queue.poll();
+        if(value.equals("#")){
+            return null;
+        }
+        TreeNode node = new TreeNode(Integer.parseInt(value));
+        node.left = deserializeHelper(queue);
+        node.right = deserializeHelper(queue);
+        return node;
+    }
+}
+
+242. 将二叉树按照层级转化为链表
+给一棵二叉树，设计一个算法为每一层的节点建立一个链表。也就是说，如果一棵二叉树有 D 层，那么你需要创建 D 条链表。
+
+样例
+样例 1:
+
+输入: {1,2,3,4}
+输出: [1->null,2->3->null,4->null]
+解释: 
+        1
+       / \
+      2   3
+     /
+    4
+
+/**
+ * Definition of TreeNode:
+ * public class TreeNode {
+ *     public int val;
+ *     public TreeNode left, right;
+ *     public TreeNode(int val) {
+ *         this.val = val;
+ *         this.left = this.right = null;
+ *     }
+ * }
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode(int x) { val = x; }
+ * }
+ */
+
+public class Solution {
+    /**
+     * @param root the root of binary tree
+     * @return a lists of linked list
+     */
+    public List<ListNode> binaryTreeToLists(TreeNode root) {
+        // Write your code here
+        // for循环里面的每一个遍历都是对同一层级的数据进行遍历的，所以可以在for里面做处理
+        List<ListNode> result = new ArrayList<>();
+        if(root == null) {
+            return result;
+        }
+        ListNode dummy = new ListNode(0);
+        ListNode lastNode = null;
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+        while(!queue.isEmpty()) {
+            dummy.next = null;
+            lastNode = dummy;
+            int size = queue.size();
+            for(int i = 0; i < size; i++) {
+      	 // 使用一个临时变量来记录上一个，以便下一次使用
+                TreeNode head = queue.poll();
+                lastNode.next = new ListNode(head.val);
+                lastNode = lastNode.next;
+                if(head.left != null) {
+                    queue.offer(head.left);
+                }
+                if(head.right != null) {
+                    queue.offer(head.right);
+                }
+            }
+            result.add(dummy.next);
         }
         return result;
     }
