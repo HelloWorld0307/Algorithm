@@ -1,0 +1,141 @@
+
+图的遍历(由点及面) 条件1:刚好N-1条边 条件2:N个点连通 
+问:如何用基本数据结构表示一个图?
+
+178. 图是否是树
+给出 n 个节点，标号分别从 0 到 n - 1 并且给出一个 无向 边的列表 (给出每条边的两个顶点), 写一个函数去判断这张｀无向｀图是否是一棵树
+
+样例
+样例 1:
+
+输入: n = 5 edges = [[0, 1], [0, 2], [0, 3], [1, 4]]
+输出: true.
+思路：其实就是宽度优先搜索 + 图的存储
+
+public class Solution {
+
+    public boolean validTree(int n, int[][] edges) {
+        // write your code here
+        if (n == 0) {
+            return false;
+        }
+        if (edges.length != n - 1) {
+            return false;
+        }
+        Map<Integer, Set<Integer>> graph = initialGraph(n, edges);
+        // 将二维数组转换为map类型的图后使用BFS处理
+        Queue<Integer> queue = new LinkedList<>();
+        Set<Integer> hash = new HashSet<>();
+        
+        // 因为节点是从0开始的所以0肯定是存在的
+        queue.offer(0);
+        // hash是用来记录已经访问过的节点
+        hash.add(0);
+        while(!queue.isEmpty()) {
+            int size = queue.size();
+            Integer cur = queue.poll();
+            // 在map也就是graph中找多对应的key下个的set, 也就是当前cur节点的邻居
+            for(Integer neighbor : graph.get(cur)) {
+                if(hash.contains(neighbor)){ // 如果hash中已经保存neighbor节点直接跳过
+                    continue;
+                }
+                queue.offer(neighbor);
+                hash.add(neighbor);
+            }
+        }
+        return (hash.size() == n);
+    }
+    
+    // 图在数据库里面是以int[][]二维数组的形式存储，但是在内存中要将其转化为map类型，
+    // 其中每个节点的所有邻居用一个Map<Integer, Set<Integer>>的形式表示
+    public Map<Integer, Set<Integer>> initialGraph(int n, int[][] edges){
+        Map<Integer, Set<Integer>> graph = new HashMap<>();
+        // 一共有 n 个节点，标号分别从 0 到 n - 1 ，所以需要将这个点都存入到map中
+        for(int i = 0; i < n; i++) {
+            graph.put(i, new HashSet<Integer>());
+        }
+        // 接下来找到每一个节点的邻居点，使用set存储，set特性是不能存储重复数值
+        for(int i = 0; i < edges.length; i++) {
+            int u = edges[i][0];
+            int v = edges[i][1];
+            graph.get(u).add(v);     // 由于是无向图所以是0是1的邻居，那么反过来也是的
+            graph.get(v).add(u);
+        }
+        return graph; // 最后求得的graph里面包含每一个节点，而且每一个节点的邻居节点都存储在set里面
+    }
+}
+
+
+137. 克隆图
+克隆一张无向图. 无向图的每个节点包含一个 label 和一个列表 neighbors. 保证每个节点的 label 互不相同.
+
+你的程序需要返回一个经过深度拷贝的新图. 新图和原图具有同样的结构, 并且对新图的任何改动不会对原图造成任何影响.
+
+样例
+
+输入:
+{1,2,4#2,1,4#4,1,2}
+输出: 
+{1,2,4#2,1,4#4,1,2}
+解释:
+1------2  
+ \     |  
+  \    |  
+   \   |  
+    \  |  
+      4   
+思路：1，通过给定的node节点找到所有的节点
+    2，使用map的特性，将复制一份新节点存储在map中，其中key值为旧节点，value值为新节点
+    3，找到一一对应的关系后是用循环遍历，首先遍历旧节点的中每一个节点的邻居，通过找到的这些邻居去map中找到新节点，然后存储在当前节点的邻居中
+
+public class Solution {
+    /*
+     * @param node: A undirected graph node
+     * @return: A undirected graph node
+     */
+     // 题目要求：将一个图完全的复制一份出来，对复制的新图修改不会影响旧图
+    public UndirectedGraphNode cloneGraph(UndirectedGraphNode node) {
+        // write your code here
+        if(node == null) {
+            return null;
+        }
+        // 1，根据给定的node找到所有的node节点，这些node节点包括节点label 和 节点的邻居节点
+       ArrayList<UndirectedGraphNode> nodes = getAllNodes(node);
+       
+       // 2, 将新旧点一一对应关系存储在一个Map<UndirectedGraphNode, UndirectedGraphNode>类型中
+       Map<UndirectedGraphNode, UndirectedGraphNode> map = new HashMap<>();
+       for(UndirectedGraphNode oldNode : nodes) {
+           map.put(oldNode, new UndirectedGraphNode(oldNode.label));
+       }
+       // 3，新旧点一一对应后，循环遍历旧图中所有节点其邻居节点
+       for(UndirectedGraphNode n:nodes) {
+           UndirectedGraphNode newNode = map.get(n);
+           // 当前的neighbor是旧图里面的，我需要找到这个旧neighbor节点在新的中的节点
+           for(UndirectedGraphNode neighbor : n.neighbors) {
+               UndirectedGraphNode newNeightbor = map.get(neighbor);
+               newNode.neighbors.add(newNeightbor);
+           }
+       }
+       // 4，返回题目给定的node节点在新的mapping对应关系中的位置
+       return map.get(node);
+    }
+    
+    // 像这种给定一个点求得所有的点的有点求面类题目，第一反应就是使用宽度优先搜索
+    private ArrayList<UndirectedGraphNode> getAllNodes(UndirectedGraphNode node){
+        Queue<UndirectedGraphNode> queue = new LinkedList<>();
+        Set<UndirectedGraphNode> set = new HashSet<>();
+        queue.offer(node);
+        set.add(node);
+        while(!queue.isEmpty()){
+            UndirectedGraphNode cur = queue.poll();
+            for(UndirectedGraphNode neighbor : cur.neighbors){
+                if(!set.contains(neighbor)){
+                    // 如果set里面没有cur节点说明，还未遍历过
+                    queue.offer(neighbor);
+                    set.add(neighbor);
+                }
+            }
+        }
+        return new ArrayList<UndirectedGraphNode>(set);
+    }
+}
