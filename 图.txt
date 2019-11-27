@@ -139,3 +139,149 @@ public class Solution {
         return new ArrayList<UndirectedGraphNode>(set);
     }
 }
+
+
+
+127. 拓扑排序
+给定一个有向图，图节点的拓扑排序定义如下:
+
+对于图中的每一条有向边 A -> B , 在拓扑排序中A一定在B之前.
+拓扑排序中的第一个节点可以是图中的任何一个没有其他节点指向它的节点.
+针对给定的有向图找到任意一种拓扑排序的顺序.
+
+样例
+
+The topological order can be:
+
+[0, 1, 2, 3, 4, 5]
+[0, 2, 3, 1, 5, 4]
+
+// 思路：获取到图中每一个节点的入度，使用getInDegree方法获取的都是有入度的节点，查找哪个点在入度结果中不存在那么这个点就是出发点，
+//     那么遍历这个点的所有邻居点，将其入度减一最后在判断其入度是否为0，如果为0则可以放大结果list中
+
+public class Solution {
+
+    public ArrayList<DirectedGraphNode> topSort(ArrayList<DirectedGraphNode> graph) {
+        
+        // 1,找到每一个节点的入度，这里的result返回list都是入度不为零的节点
+        ArrayList<DirectedGraphNode> result = new ArrayList<DirectedGraphNode>();
+        Map<DirectedGraphNode, Integer> inDegree = getInDegree(graph);
+        
+        // 2,找到所有入度为0的节点，将其放在队列里--如果上一步返回的map中没有的节点就是入度为0的节点了
+        Queue<DirectedGraphNode> queue = new LinkedList<>();
+        for(DirectedGraphNode node : graph) {
+            if(!inDegree.containsKey(node)){
+                queue.offer(node);
+                result.add(node);
+            }
+        }
+        // 3,从队列里面拿出所有的节点，在队列里面的节点都是即将被写入结果map中的，这是需要找到所有的邻居
+        //    节点，将这些邻居节点的入度减一，同时判断是否存在为如果为0的节点，如果是的入队列
+        while(!queue.isEmpty()){
+            DirectedGraphNode head = queue.poll();
+            // 找到当前节点head的所有邻居，将其邻居的入度减一
+            for(DirectedGraphNode neighbor : head.neighbors) {
+                inDegree.put(neighbor, inDegree.get(neighbor) - 1);
+                if(inDegree.get(neighbor) == 0){
+                    queue.offer(neighbor);
+                    result.add(neighbor);
+                }
+            }
+        }
+        return result;
+    }
+    
+    // 有向图如果有A到B说明B是A的邻居，但是从B不到A说明B的neighbors里面没有A
+    private Map<DirectedGraphNode, Integer> getInDegree(ArrayList<DirectedGraphNode> graph) {
+        Map<DirectedGraphNode, Integer> result = new HashMap<>();
+        for(DirectedGraphNode node : graph) {
+            for(DirectedGraphNode neighbor : node.neighbors) {
+                if(result.containsKey(neighbor)){
+                    result.put(neighbor, result.get(neighbor) + 1);
+                }else{
+                    result.put(neighbor, 1);
+                }
+            }
+        }
+        return result;
+    }
+}
+
+615. 课程表
+现在你总共有 n 门课需要选，记为 0 到 n - 1.
+一些课程在修之前需要先修另外的一些课程，比如要学习课程 0 你需要先学习课程 1 ，表示为[0,1]
+给定n门课以及他们的先决条件，判断是否可能完成所有课程？
+
+样例
+例1:
+
+输入: n = 2, prerequisites = [[1,0]] 
+输出: true
+例2:
+
+输入: n = 2, prerequisites = [[1,0],[0,1]] 
+输出: false
+
+思路：这一题和上面一题其实差不多，只不过是给定的是一个二维数组，需要将其转化为一个map， 这一题和178类似
+
+public class Solution {
+
+    public boolean canFinish(int numCourses, int[][] prerequisites) {
+        // 如果为空则直接返回true
+        if(prerequisites.length == 0 || numCourses == 0){
+            return true;
+        }
+        // 先将二维数组转为map，根据题意可以理解为有向图
+        Map<Integer, List<Integer>> map = getGraphList(numCourses, prerequisites);
+        
+        // 接下来给每一个节点计算入度
+        Map<Integer, Integer> indegreeMap = new HashMap<>();
+        for(int i = 0; i < numCourses; i++ ) {
+            for(Integer neighbor : map.get(i)){
+                if(indegreeMap.containsKey(neighbor)){
+                    indegreeMap.put(neighbor, indegreeMap.get(neighbor) + 1);
+                }else {
+                    indegreeMap.put(neighbor, 1);
+                }
+            }
+        }
+        //寻找入度为0的节点
+        Queue<Integer> queue = new LinkedList<>();
+        List<Integer> resultList = new ArrayList<>();
+        
+        for(int i = 0; i < numCourses; i++) {
+            if(!indegreeMap.containsKey(i)){
+                queue.offer(i);
+                resultList.add(i);
+            }
+        }
+        
+        while(!queue.isEmpty()){
+            Integer head =  queue.poll();
+            for(Integer neighbor : map.get(head)) {
+                indegreeMap.put(neighbor, indegreeMap.get(neighbor)-1);
+                if(indegreeMap.get(neighbor) == 0){
+                    resultList.add(neighbor);
+                    queue.offer(neighbor);
+                }
+            }
+        }
+        
+        return resultList.size() == numCourses;
+        
+    }
+    
+    // 返回一个以map形式存储的图
+    private Map<Integer, List<Integer>> getGraphList(int num, int [][] prerequisites){
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        for(int i = 0; i < num; i++) {
+            map.put(i, new ArrayList<Integer>());
+        }
+        for(int j = 0; j < prerequisites.length; j++){
+            int u = prerequisites[j][0];
+            int v = prerequisites[j][1];
+            map.get(u).add(v);
+        }
+        return map;
+    }
+}
