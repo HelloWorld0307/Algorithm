@@ -484,3 +484,85 @@ class Solution {
         return coorX >= 0 && coorX < xBound && coorY >= 0 && coorY < yBound;
     }
 }
+
+127,给定两个单词（beginWord 和 endWord）和一个字典，找到从 beginWord 到 endWord 的最短转换序列的长度。转换需遵循如下规则：
+
+每次转换只能改变一个字母。
+转换过程中的中间单词必须是字典中的单词。
+示例 1
+输入:
+beginWord = "hit",
+endWord = "cog",
+wordList = ["hot","dot","dog","lot","log","cog"]
+
+输出: 5
+解释: 一个最短转换序列是 "hit" -> "hot" -> "dot" -> "dog" -> "cog",
+     返回它的长度 5。
+
+示例 2
+输入:
+beginWord = "hit"
+endWord = "cog"
+wordList = ["hot","dot","dog","lot","log"]
+
+输出: 0
+解释: endWord "cog" 不在字典中，所以无法进行转换。
+
+// 题目意思：给单单词start 再给定的单词list中经过多少次可以变换到单词end，每次只能变化一个字母，
+// 例如：a -> c在["a","b","c"]中，经过两步就可以了
+class Solution {
+    public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+        if(beginWord.equals(endWord)){
+            return 1;
+        }
+        if(wordList == null) {
+            return 0;
+        }
+        if(!wordList.contains(endWord)) {
+            return 0;
+        }
+        Queue<String> queue = new LinkedList<>();
+        Set<String> hash = new HashSet<>();
+
+        queue.offer(beginWord);
+        hash.add(beginWord);
+        int count = 1;
+        while(!queue.isEmpty()) {
+            count++;
+            int size = queue.size();
+            for(int i = 0; i < size; i++) {
+                String head = queue.poll();
+                for(String nextWord : getNextWordList1(head, wordList)) {
+                    if(hash.contains(nextWord)){
+                        continue;
+                    }
+                    if(nextWord.equals(endWord)) {
+                        return count;
+                    }
+                    hash.add(nextWord);
+                    queue.offer(nextWord);
+                }
+            }
+        }
+        return 0;
+    }
+
+    // 这种办法是不会超时的，不能使用对每一单词都从a - z进行变化在list中查找，这样程序会超时
+    private List<String> getNextWordList1(String target, List<String> wordList) {
+        List<String> resultList = new ArrayList<>();
+        for(String word : wordList){
+            // 找出有两个字母不一样的单词
+            int count = 0;
+            for(int i = 0; i < target.length(); i++) {
+                if(target.charAt(i) == word.charAt(i)){
+                    count++;
+                } 
+            }
+            if(count == (target.length() - 1)) {
+                resultList.add(word);
+            }
+        }
+        return resultList;
+    }
+
+}
