@@ -120,3 +120,115 @@ class LRUCache {
         }
     }
 }
+
+264 编写一个程序，找出第 n 个丑数。
+
+丑数就是只包含质因数 2, 3, 5 的正整数。
+
+示例:
+
+输入: n = 10
+输出: 12
+解释: 1, 2, 3, 4, 5, 6, 8, 9, 10, 12 是前 10 个丑数。
+说明:  
+
+1 是丑数。
+n 不超过1690。
+
+// PriorityQueue的数据结构存入的时候默认是按照自然数排序的，poll出来的顺序都是从小到大的，
+// 除非是自己充血compare这个方法，自己指定对比的方法， 所以使用在这道题很方便
+class Solution {
+    public int nthUglyNumber(int n) {
+        if(n <= 0) {
+            return 0;
+        }
+        Queue<Long> queue = new PriorityQueue<>();
+        HashSet<Long> set = new HashSet<>();
+        Long[] primate = new Long[3];
+        primate[0] = Long.valueOf(2);
+        primate[1] = Long.valueOf(3);
+        primate[2] = Long.valueOf(5);
+        Long num = Long.valueOf(1);
+        set.add(num);
+        for(int i = 0; i < 3; i++){
+            queue.add(primate[i]);
+            set.add(primate[i]);
+        }
+        // 为什么值循环了n - 1次呢？ 是因为之前set里面已经存放了1
+        for(int j = 1; j < n; j++){
+            num = queue.poll();
+            for(int i = 0; i < 3; i++){
+                if(!set.contains(primate[i] * num)){
+                    // PriorityQueue每次存入数据的时候都会根据特性进行变换结构 
+                    // 按照顺序排列，所以在上一步的poll中肯定是删除的是最小值，
+                    // 这样在最后一次poll的值就是需要用到的
+                    queue.add(primate[i] * num);
+                    set.add(primate[i] * num);
+                }
+            }
+        }
+        return num.intValue();
+    }
+}
+
+
+
+23. 合并K个排序链表
+
+合并 k 个排序链表，返回合并后的排序链表。请分析和描述算法的复杂度。
+
+示例:
+
+输入:
+[
+  1->4->5,
+  1->3->4,
+  2->6
+]
+输出: 1->1->2->3->4->4->5->6
+
+
+// 思路：使用PriorityQueue按照从小到大顺序排序，由于List存放的是每个链表的头节点，这样用PriorityQueue刚好解决问题
+// 时间复杂度：while循环执行n次，poll方法是logK，所以为n*logK
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode(int x) { val = x; }
+ * }
+ */
+class Solution {
+    // 这个一个方法重写是必须要记住，left - right 表示这个PriorityQueue是按照从小到大排序，right - left：从大到小
+    private Comparator<ListNode> comparator = new Comparator<ListNode>(){
+        public int compare(ListNode left, ListNode right){
+            return left.val - right.val;
+        }
+    };
+
+    public ListNode mergeKLists(ListNode[] lists) {
+        if(lists == null || lists.length == 0){
+            return null;
+        }
+        PriorityQueue<ListNode> heap = new PriorityQueue(lists.length, comparator);
+        // 给定的lists中存入的都是链表的头节点，所以只需要遍历list中每一个元素即可
+        for(int i = 0; i < lists.length; i++) {
+            if(lists[i] != null){
+                heap.add(lists[i]);
+            }
+        }
+        // 所有新增节点都是重尾部放起，tail.next =  head;
+        ListNode dummy = new ListNode(0);
+        ListNode tail = dummy;
+        while(!heap.isEmpty()){
+            ListNode head = heap.poll();
+            // PriorityQueue默认是按照自然数排序的，此时需要将poll出来最小元素与dummy和tail进行连接，即插入到dummy与tail之间
+            tail.next = head; 
+            tail = head;
+            if(head.next != null) {
+                heap.add(head.next);
+            }
+        }
+        return dummy.next;
+    }
+}
