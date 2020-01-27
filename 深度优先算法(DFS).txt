@@ -221,3 +221,78 @@ class Solution {
         }
     }
 }
+
+376. 二叉树的路径和
+中文English
+给定一个二叉树，找出所有路径中各节点相加总和等于给定 目标值 的路径。
+
+一个有效的路径，指的是从根节点到叶节点的路径。
+
+样例
+样例1:
+
+输入:
+{1,2,4,2,3}
+5
+输出: [[1, 2, 2],[1, 4]]
+说明:
+这棵树如下图所示：
+	     1
+	    / \
+	   2   4
+	  / \
+	 2   3
+对于目标总和为5，很显然1 + 2 + 2 = 1 + 4 = 5
+
+public class Solution {
+    /*
+     * @param root: the root of binary tree
+     * @param target: An integer
+     * @return: all valid paths
+     */
+    List<List<Integer>> result = new ArrayList<>();
+    public List<List<Integer>> binaryTreePathSum(TreeNode root, int target) {
+        if(root == null) {
+            return result;
+            
+        }
+        List<Integer> result1 = new ArrayList<>();
+        result1.add(root.val);
+        // write your code here
+        helper(root, target, result1);
+        return result;
+    }
+    
+    private void helper(TreeNode root, int target, List<Integer> tempList){
+    
+        if(root == null) {
+            return;
+        }
+        // 叶子节点
+        if(root.left == null && root.right == null) {
+            if(sumList(tempList) == target) {
+                result.add(new ArrayList<>(tempList));
+            }
+            return;
+        }
+        if(root.left != null) {
+            tempList.add(root.left.val);
+            helper(root.left, target, tempList);
+            tempList.remove(tempList.size() - 1);
+        }
+        if(root.right != null) {
+            tempList.add(root.right.val);
+            helper(root.right, target, tempList);
+            tempList.remove(tempList.size() - 1);
+        }
+    }
+    
+    private int sumList(List<Integer> list){
+        int result = 0;
+        for(int i = 0; i < list.size(); i++){
+            result += list.get(i);
+        }
+        return result;
+    }
+    
+}
