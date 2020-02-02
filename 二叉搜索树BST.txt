@@ -1,0 +1,67 @@
+108. 将有序数组转换为二叉搜索树
+将一个按照升序排列的有序数组，转换为一棵高度平衡二叉搜索树。
+
+本题中，一个高度平衡二叉树是指一个二叉树每个节点 的左右两个子树的高度差的绝对值不超过 1。
+
+示例:
+
+给定有序数组: [-10,-3,0,5,9],
+
+一个可能的答案是：[0,-3,9,-10,null,5]，它可以表示下面这个高度平衡二叉搜索树：
+
+      0
+     / \
+   -3   9
+   /   /
+ -10  5
+
+// 思路：在有序数组中使用二分法找到中间值作为root，在开始节点到中间节点为左子树，中间节点到结尾节点为右子树；
+//    循环遍历操作
+ class Solution {
+    public TreeNode sortedArrayToBST(int[] nums) {
+        if(nums == null || nums.length == 0){
+            return null;
+        }
+        int start = 0;
+        int end = nums.length - 1;
+        int mid = start + (end - start) / 2;
+        TreeNode root = new TreeNode(nums[mid]);
+        int[] left = Arrays.copyOfRange(nums, start, mid); //截取索引 start（包括）到索引 mid（不包括）的元素
+        int[] right = Arrays.copyOfRange(nums, mid + 1, end + 1);
+        root.left = sortedArrayToBST(left);
+        root.right = sortedArrayToBST(right);
+        return root;
+    }
+}
+
+109,二叉搜索树转化为双向链表
+
+输入一棵二叉搜索树，将该二叉搜索树转换成一个排序的双向链表。要求不能创建任何新的结点，只能调整树中结点指针的指向。
+
+// 思路：原先指向左子结点的指针调整为链表中指向前一个结点的指针，原先指向右子结点的指针调整为链表中指向下一个结点的指针。例如对
+// 于上面的值为2的指点，调整后，它的前一个结点为1，后一个结点为3，而结点2的左子结点本来就为1，右子结点本来就为3.
+// 从二叉搜索树的最右节点开始转换 ，当前节点的right指针指向prev， prev 的左指针指向当前节点， 此时你肯定在想当前节点的left
+// 怎么办呢，当前节点其实就是prev，当执行到上一层后prev.left 就会指向下一层的节点的
+
+public class Solution {
+    TreeNode prev;
+    public TreeNode Convert(TreeNode pRootOfTree) {
+        if(pRootOfTree == null) {
+            return pRootOfTree;
+        }
+        // 一直主找到最右节点，从树的最右节点开始转
+        Convert(pRootOfTree.right);
+        // 如归prev为空说明是最右叶子节点
+        if(prev == null){
+            prev = pRootOfTree;
+        }else{
+            // prev不为空的情况下不是最右节点，现在需要开始转换链表了
+            pRootOfTree.right = prev;
+            prev.left = pRootOfTree;
+            prev = pRootOfTree;
+        }
+        
+        Convert(pRootOfTree.left);
+        return prev;
+    }
+}
