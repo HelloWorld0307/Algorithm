@@ -447,3 +447,191 @@ class Solution {
         return val - 1;
     }
 }
+127. 单词接龙I
+给定两个单词（beginWord 和 endWord）和一个字典，找到从 beginWord 到 endWord 的最短转换序列的长度。转换需遵循如下规则：
+
+每次转换只能改变一个字母。
+转换过程中的中间单词必须是字典中的单词。
+说明:
+
+如果不存在这样的转换序列，返回 0。
+所有单词具有相同的长度。
+所有单词只由小写字母组成。
+字典中不存在重复的单词。
+你可以假设 beginWord 和 endWord 是非空的，且二者不相同。
+示例 1:
+
+输入:
+beginWord = "hit",
+endWord = "cog",
+wordList = ["hot","dot","dog","lot","log","cog"]
+
+输出: 5
+
+解释: 一个最短转换序列是 "hit" -> "hot" -> "dot" -> "dog" -> "cog",
+     返回它的长度 5。
+class Solution {
+    public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+        if(beginWord.equals(endWord)){
+            return 1;
+        }
+        if(wordList == null || wordList.size() == 0) {
+            return 0;
+        }
+        if(!wordList.contains(endWord)){
+            return 0;
+        }
+        Queue<String> queue = new LinkedList<>();
+        Set<String> set = new HashSet<>();
+        queue.offer(beginWord);
+        set.add(beginWord);
+        int count = 1;
+        while(!queue.isEmpty()) {
+            count++;
+            int size = queue.size();
+            for(int i = 0; i < size; i++){
+                String head = queue.poll();
+                // 找到wordList里面所有符合要求的单词--只有一个字母不一样的
+                for(String str : getQualifiedWords(head, wordList)){
+                    // 判断找到的单词是否已经被遍历过了--通过在set里面找
+                    if(set.contains(str)){
+                        continue;
+                    }
+                    // 退出条件，结束单词和当前单词一样
+                    if(endWord.equals(str)){
+                        return count;
+                    }
+                    set.add(str);
+                    queue.offer(str);
+                }
+            }
+        }
+        return 0;   
+    }
+
+    private List<String> getQualifiedWords(String head, List<String> wordList) {
+        List<String> result = new ArrayList<>();
+        // 超过一个字母不一样的即不符合要求
+        for(String str : wordList){
+            int count = 0;
+            for(int i = 0; i < head.length(); i++){
+                if(head.charAt(i) != str.charAt(i)){
+                    count++;
+                }
+            }
+            if(count <= 1){
+                result.add(str);
+            }
+        }
+        return result;
+    }
+}
+
+
+
+126. 单词接龙 II
+给定两个单词（beginWord 和 endWord）和一个字典 wordList，找出所有从 beginWord 到 endWord 的最短转换序列。转换需遵循如下规则：
+
+每次转换只能改变一个字母。
+转换过程中的中间单词必须是字典中的单词。
+说明:
+
+如果不存在这样的转换序列，返回一个空列表。
+所有单词具有相同的长度。
+所有单词只由小写字母组成。
+字典中不存在重复的单词。
+你可以假设 beginWord 和 endWord 是非空的，且二者不相同。
+示例 1:
+
+输入:
+beginWord = "hit",
+endWord = "cog",
+wordList = ["hot","dot","dog","lot","log","cog"]
+
+输出:
+[
+  ["hit","hot","dot","dog","cog"],
+  ["hit","hot","lot","log","cog"]
+]
+
+// 思路：
+// 在单词接龙的基础上，需要将找到的最短路径存储下来；
+// 之前的队列只用来存储每层的元素，那么现在就得存储每层添加元素之后的结果："ab","if",{"cd","af","ib","if"}；
+// （1）第一层：{"ab"}
+// （2）第二层：{"ab","af"}、{"ab","ib"}
+// （3）第三层：{"ab","af","if"}、{"ab","ib","if"}
+// 如果该层添加的某一个单词符合目标单词，则该路径为最短路径，该层为最短路径所在的层，但此时不能直接返回结果，必须将该层遍历完，将该层所有符合的结果都添加进结果集；
+// 每层添加单词的时候，不能直接添加到总的已访问单词集合中，需要每层有一个单独的该层访问的单词集，该层结束之后，再会合到总的已访问单词集合中，原因就是因为3.
+// 注意:如果使用的每一层的所有的待选路径所接的下一单词都记录在同一个tempSet中，如果放错位置就会导致最终数据缺失部分，因为不同路劲在循环的时候访问过的单词提前
+// 记录在tempSet中会影响到下一次循环
+class Solution {
+    public List<List<String>> findLadders(String beginWord, String endWord, List<String> wordList) {
+        List<List<String>> result = new ArrayList<>();
+        if(wordList != null && !wordList.contains(endWord)) {
+            return result;
+        }
+        Queue<List<String>> queue = new LinkedList<>();
+        
+        Set<String> visited = new HashSet<>();
+        // 将wordList转化为set，方便后期做排查单词是否存在
+        Set<String> dictionary = new HashSet<>(wordList);
+        // 初始化队列
+        queue.offer(Arrays.asList(beginWord));
+        // 第一个单词访问过后需要记录下来
+        visited.add(beginWord);
+        boolean flag = false;
+        while(!queue.isEmpty() && !flag) {
+            int size = queue.size();
+            // 除了visited记录已经访问过的单词，上一步poll出来的所有层所访问的单词都要记录下来，最后一并存放到visited中
+            Set<String> tempSet = new HashSet<>();
+            // 当前一共记录了size大小个路径了，现在获取每一种情况的最后一个单词并且开始找相似的单词
+            for(int i = 0; i < size; i++) {
+                List<String> head = queue.poll();
+                // 找到最后一个单词
+                String lastWord = head.get(head.size() - 1);
+                // 通过getQualifiedWords这个方法找到所有满足的单词
+                List<String> qualifiedWords = getQualifiedWords(lastWord, wordList);
+                for(String str : qualifiedWords) {
+                    if(!dictionary.contains(str) || visited.contains(str)) {
+                        continue;
+                    }
+                    // 找到的所有单词如果没有访问过就可以直接加上新单词后加入到queue中去
+                    // 注意：要是用深度拷贝
+                    List<String> tempList = new ArrayList<>(head);
+                    tempList.add(str);
+                    // 如果新找到的单词为endWord说明已经找到了最短的
+                    if(endWord.equals(str)) {
+                        // flag 表示找到了最短路径，即为当前层head为最短路径
+                        flag = true;
+                        result.add(tempList);
+                        continue;
+                    }
+                    queue.offer(tempList);
+                    tempSet.add(str);
+                }
+            }
+            visited.addAll(tempSet);
+        }
+        return result;
+
+    }
+    
+    // 如果使用这种方法进行匹配单词过滤，当list里面参数过长会导致代码超时
+    // 解决的办法是使用26个字母进行获取匹配单词
+    private List<String> getQualifiedWords(String head, List<String> wordList) {
+        List<String> result = new ArrayList<>();
+        // 超过一个字母不一样的即不符合要求
+        for(String str : wordList){
+            int count = 0;
+            for(int i = 0; i < head.length(); i++){
+                if(head.charAt(i) != str.charAt(i)){
+                    count++;
+                }
+            }
+            if(count <= 1){
+                result.add(str);
+            }
+        }
+        return result;
+    }
+}

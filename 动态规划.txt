@@ -473,3 +473,58 @@ class Solution {
             return list;
     }
 }
+
+
+
+55. 跳跃游戏
+给定一个非负整数数组，你最初位于数组的第一个位置。
+
+数组中的每个元素代表你在该位置可以跳跃的最大长度。
+
+判断你是否能够到达最后一个位置。
+
+示例 1:
+
+输入: [2,3,1,1,4]
+输出: true
+解释: 我们可以先跳 1 步，从位置 0 到达 位置 1, 然后再从位置 1 跳 3 步到达最后一个位置。
+示例 2:
+
+输入: [3,2,1,0,4]
+输出: false
+解释: 无论怎样，你总会到达索引为 3 的位置。但该位置的最大跳跃长度是 0 ， 所以你永远不可能到达最后一个位置。
+
+// 思路：dp[i] 表示从i个位置是否可以跳到最后一个元素
+// 当位置为i的时候，从i + 1开始判断是否可以跳过去，如果可以跳过去就记录为GOOD，
+// i是从最后一个位置开始的，所以一旦检查可以跳过去后就标记为GOOD，当下一次遇到了直接使用
+class Solution {
+    enum index{
+        GOOD, UNKNOWN
+    }
+    index[] dp;
+    public boolean canJump(int[] nums) {
+        if(nums == null) {
+            return false;
+        }
+        dp = new index[nums.length]; 
+        for(int i = 0; i < nums.length; i++) {
+            dp[i] = index.UNKNOWN;
+        }
+        int len = nums.length - 1;
+        dp[len] = index.GOOD;
+        // helper(nums);
+        for(int i = nums.length - 2; i >= 0; i--) {
+            // 当在位置i的时候，最多可以跳动的位置；当i位置的可跳跃的数量大于最大可跳步数时候还是要按照数组最大长度减计算，不然会溢出
+            int maxJumps = Math.min(i + nums[i], len); 
+            for(int j = i + 1; j <= maxJumps; j++) {
+                if(dp[j] == index.GOOD) {
+                    dp[i] = index.GOOD;
+                    // 不加break则每一个位置i都会去校验i到最后一个位置，是否可以跳过去
+                    break;
+                }
+            }
+        }
+        return dp[0] == index.GOOD;
+    }
+}
+
