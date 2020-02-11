@@ -635,3 +635,196 @@ class Solution {
         return result;
     }
 }
+
+178. 图是否是树
+给出 n 个节点，标号分别从 0 到 n - 1 并且给出一个 无向 边的列表 (给出每条边的两个顶点), 写一个函数去判断这张｀无向｀图是否是一棵树
+
+样例
+样例 1:
+
+输入: n = 5 edges = [[0, 1], [0, 2], [0, 3], [1, 4]]
+输出: true.
+样例 2:
+
+输入: n = 5 edges = [[0, 1], [1, 2], [2, 3], [1, 3], [1, 4]]
+输出: false.
+
+public class Solution {
+    /**
+     * @param n: An integer
+     * @param edges: a list of undirected edges
+     * @return: true if it's a valid tree, or false
+     */
+     // 1,所有的节点联通，2，边数 = 节点数 - 1；
+    public boolean validTree(int n, int[][] edges) {
+        // write your code here
+        if(n == 0) {
+            return false;
+        }
+        if(edges.length != n - 1) {
+            return false;
+        }
+        // 这里进行判别n个点是否都联通起来的
+        // 将二维数组转为map表达
+        Map<Integer, List<Integer>> graph = getGraph(n, edges);
+        // 记录那些节点是联通的
+        Set<Integer> set = new HashSet<>();
+        Queue<Integer> queue = new LinkedList<>();
+        queue.offer(0);
+        set.add(0);
+        while(!queue.isEmpty()){
+                Integer cur = queue.poll();
+                for(Integer neighbor : graph.get(cur)){
+                    if(set.contains(neighbor)){
+                        continue;
+                    }
+                    queue.offer(neighbor);
+                    set.add(neighbor);
+                }
+        }
+        return n == set.size();
+    }
+    private Map<Integer, List<Integer>> getGraph(int n, int[][] edges) {
+        Map<Integer, List<Integer>> result = new HashMap<>();
+        for(int i = 0; i< n; i++) {
+            result.put(i, new ArrayList<Integer>());
+        }
+        for(int i = 0; i < edges.length; i++) {
+            int c = edges[i][0];
+            int d = edges[i][1];
+            result.get(c).add(d);
+            result.get(d).add(c);
+        }
+        return result;
+        
+    }
+}
+
+317. 离建筑物最近的距离
+给出一个二维的网格，每一格可以代表墙 2 ，房子 1，以及空 0 (用数字0,1,2来表示)，在网格中找到一个位置去建立邮局，使得所有的房子到邮局的距离和是最小的。
+返回所有房子到邮局的最小距离和，如果没有地方建立邮局，则返回-1.
+
+你不能穿过房子和墙，只能穿过空地。
+你只能在空地建立邮局。
+ 
+样例
+样例 1:
+
+输入：[[0,1,0,0,0],[1,0,0,2,1],[0,1,0,0,0]]
+输出：8
+解释： 在(1,1)处建立邮局，所有房子到邮局的距离和是最小的。
+
+
+// 思路：使用一个int二维数组记录从所有房子出发访问每个空地的总长度，同时使用一个int二位数组记录， 
+// 某个空白地一共被多少个房子访问过，如果被访问过的次数小于总房子数,说明此空白位置不符合要求
+// 注意：从某个房子出发每往外发散一次算是一层，在这一层中需要记录当前层的上下所有四个节点是否被访问过，不然会出现死循环
+
+class Coordinate{
+    int x; 
+    int y;
+    public Coordinate(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+}
+class Solution {
+    public int EMPTY = 0;
+    public int HOUSE = 1;
+    public int WALL = 2;
+    public int n;
+    public int m;
+    public int[][] grid;
+    //四个方向
+    public int[] directionX = {0, 0, 1, -1};
+    public int[] directionY = {1, -1, 0, 0};
+
+    //初始化n, m, grid
+    private void setGrid(int[][] grid) {
+        this.n = grid.length;
+        this.m = grid[0].length;
+        this.grid = grid;
+    }
+
+    //获取1，0的坐标序列
+    private List<Coordinate> getCoordinates(int type) {
+        List<Coordinate> coordinates = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (grid[i][j] == type) {
+                    coordinates.add(new Coordinate(i, j));
+                }
+            }
+        }
+        return coordinates;
+    }
+
+    //判断坐标是否valid
+    private boolean inBound(int x, int y) {
+        return x >= 0 && x < n && y >= 0 && y < m && grid[x][y] == 0;
+    }
+
+    public void helper(int x, int y, int[][] distanceSum, int[][] visited) {
+       
+        // 声明一个二维数组记录当前某一个房屋下是否已经对某一个空地访问过了
+        boolean [][] tempVisited = new boolean [n][m];
+        Queue<Coordinate> queue = new LinkedList<>();
+        queue.offer(new Coordinate(x, y));
+        tempVisited[x][y] = true;
+        int step = 0;
+        while(!queue.isEmpty()){
+            int size = queue.size();
+            // 以【x，y】节点为中心向四周发散，寻找空地，每往外发散一次代表一层
+            step++;
+            for(int i = 0; i < size; i++) {
+                Coordinate coor = queue.poll();
+                // 上下左右寻找空地位置
+                for(int j = 0; j < 4; j++) {
+                    Coordinate neighbor = new Coordinate(
+                        coor.x + directionX[j],
+                        coor.y + directionY[j]
+                    );
+                    // 检查是否越界以及当前位置是否为空地
+                    if (!inBound(neighbor.x, neighbor.y)) {
+                        continue;
+                    }
+                    // 处于当前层的环境下判断某个点是否访问过，只能访问没有访问过的点
+                    if (tempVisited[neighbor.x][neighbor.y]) {
+                        continue;
+                    }
+                    queue.offer(neighbor);
+                    tempVisited[neighbor.x][neighbor.y] = true;
+                    distanceSum[neighbor.x][neighbor.y] += step;
+                    visited[neighbor.x][neighbor.y]++;
+                }
+            }
+        }
+    }
+
+    public int shortestDistance(int[][] grid) {
+        if(grid == null) {
+            return -1;
+        }
+        setGrid(grid);
+
+        // 获得所有的房屋的坐标
+        List<Coordinate> houses = getCoordinates(HOUSE);
+
+        // 声明累加数组，此数组用来记录从每个建筑物出发到达某一个空地的距离和，最后从这里面取一个最小的位置就是目标位置
+        int[][] distanceSum = new int[n][m];
+        // 记录每个空地被访问过的次数，如果某个空地访问次数小于所有建筑物数量，说明真个空地不是所有的建筑物可以到达的，所以放弃当前空地修建大厦
+        int[][] visited = new int[n][m];
+        for(Coordinate house : houses) {
+            helper(house.x, house.y, distanceSum, visited);
+        }
+        // 到达这里的时候说明所有建筑物已经访问过所有的空地了，同时二维数组distanceSum已经记录了从所有建筑物到达某一个空地的距离
+        int min = Integer.MAX_VALUE;
+        List<Coordinate> emptys = getCoordinates(EMPTY);
+        for(Coordinate empty :emptys) {
+            if(visited[empty.x][empty.y] != houses.size()){
+                    continue;
+                }
+            min = Math.min(min, distanceSum[empty.x][empty.y]);
+        }
+        return min == Integer.MAX_VALUE ? -1 : min;
+    }
+}

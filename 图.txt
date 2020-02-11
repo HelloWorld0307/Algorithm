@@ -566,3 +566,78 @@ class Solution {
     }
 
 }
+
+323. 无向图中连通分量的数目
+给定编号从 0 到 n-1 的 n 个节点和一个无向边列表（每条边都是一对节点），请编写一个函数来计算无向图中连通分量的数目。
+
+示例 1:
+
+输入: n = 5 和 edges = [[0, 1], [1, 2], [3, 4]]
+
+     0          3
+     |          |
+     1 --- 2    4 
+
+输出: 2
+示例 2:
+
+输入: n = 5 和 edges = [[0, 1], [1, 2], [2, 3], [3, 4]]
+
+     0           4
+     |           |
+     1 --- 2 --- 3
+
+输出:  1
+
+// 思路：遍历每个点的邻居节点，同时使用set记录下来点的访问状态，访问过后下次就不必再去遍历这个点
+// 访问一个点就会把这个点的所有相关联的点找到，所以调用了几次bfsHelper就有几联通分量
+// 时间复杂度：O(点数 + 边数)， 第一个for循环走的是所有的点，helper里面的for走的边
+class Solution {
+    public int countComponents(int n, int[][] edges) {
+        if(n == 0 || edges == null) {
+            return 0;
+        }
+        // 通过二维数组求得所有的节点的邻居节点
+        Map<Integer, List<Integer>> graph = getGraph(n, edges);
+        // 定义一个Set记录已经访问过的节点
+        Set<Integer> set = new HashSet<>();
+        int count = 0;
+        for(int i = 0; i < n; i++){
+            if(set.contains(i)){
+                continue;
+            }
+            bfsHelper(i, graph, set);
+            count++;
+        }
+        return count;
+    }
+    
+    private void bfsHelper(int node, Map<Integer, List<Integer>> graph, Set<Integer> set) {
+        Queue<Integer> queue = new LinkedList<>();
+        queue.offer(node);
+        while(!queue.isEmpty()) {
+            int cur =  queue.poll();
+            set.add(cur);
+            for(Integer neighbor : graph.get(cur)) {
+                if(set.contains(neighbor)){
+                    continue;
+                }
+                queue.offer(neighbor);
+            }
+        }
+    }
+
+    private Map<Integer, List<Integer>> getGraph(int n, int[][] edges) {
+        Map<Integer, List<Integer>> result = new HashMap<>();
+        for(int i = 0; i< n; i++) {
+            result.put(i, new ArrayList<Integer>());
+        }
+        for(int i = 0; i < edges.length; i++) {
+            int c = edges[i][0];
+            int d = edges[i][1];
+            result.get(c).add(d);
+            result.get(d).add(c);
+        }
+        return result;
+    }
+}
