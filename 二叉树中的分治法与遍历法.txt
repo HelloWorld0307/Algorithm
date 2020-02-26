@@ -649,7 +649,6 @@ class Solution {
 
 
 106. 有序链表转换为二分查找树
-中文English
 给出一个所有元素以升序排序的单链表，将它转换成一棵高度平衡的二分查找树
 
 样例
@@ -658,9 +657,50 @@ class Solution {
 	输出:
 		 2  
 		/ \
-		1  3
+	       1   3
 
-//思路： 题目提到了平衡二叉树，那么就将链表重中间分开，首节点为根节点，从 size / 2 处分开，
+// 容易理解，思路1：在当前的元素找到中间的数为根节点，然后从在剩下的两段中再继续知道找中间值
+class Solution {
+    public TreeNode sortedListToBST(ListNode head) {
+        if(head == null) {
+            return null;
+        }
+        // 链表转化为数组
+        int[] array = convertIntoArr(head);
+        return helper(array, 0, array.length - 1);
+    }
+
+    private TreeNode helper(int[] nums, int start, int end) {
+        // 注意这个退出条件
+        if(start > end) {
+            return null;
+        }
+        int mid = start + (end - start) / 2;
+        TreeNode root = new TreeNode(nums[mid]);
+        // start == end表示为叶子节点
+        if(start == end) {
+            return root;
+        }
+        root.left = helper(nums, start, mid - 1);
+        root.right = helper(nums, mid + 1, end);
+        return root;
+    }
+
+    private int[] convertIntoArr(ListNode head){
+        List<Integer> list = new ArrayList<>();
+        while(head != null) {
+            list.add(head.val);
+            head = head.next;
+        }
+        int [] result = new int[list.size()];
+        for(int i = 0; i < list.size(); i++){
+            result[i] = list.get(i);
+        }
+        return result;
+    }
+}
+
+//思路2： 题目提到了平衡二叉树，那么就将链表重中间分开，首节点为根节点，从 size / 2 处分开，
 //      那么左右两部分就是首节点为根结点的二叉树的左右子树，然后将分成两部分的链表每一部分再继续分两半知道 size <= 0
 
 public class Solution {
@@ -736,7 +776,7 @@ public class Solution {
          }
 
          while(!stack.isEmpty()) {
-             TreeNode head = stack.pop();
+            TreeNode head = stack.pop();
             if(head.val <= inorder) {
                 return false;
             }
@@ -754,7 +794,7 @@ public class Solution {
  }
  // 验证搜索二叉树：1， 使用分治法去分别判断左右子树节点值是否符合二叉搜索树即，root.val > root.left.val  && root.val < root.right.val， 
  // 2，判断边界问题，左右子树中所有的数据都要符合要求，这意味着我们需要在遍历树的同时保留结点的上界与下界，在比较时不仅比较子结点的值，也要与上下界比较。
-
+ // 时间复杂度：T(n) = 2T(n/2)+O(n)递推= O(nlogn)
 class Solution {
     public boolean isValidBST(TreeNode root) {
         return helper(root, null, null);
@@ -793,9 +833,9 @@ class Solution {
 	  2
 第二小的元素是2。
 
-// 思路：BST是一个左子树最大节点永远小于根节点，右子树所有的最小的节点大于根节点
-// 方法一：使用中序遍历，找到最左节点后往上返回一次就计数一次，当count 等于k就是目标值了
-// 方法二：使用中序遍历求得遍历后的数组，然后get(k)即为目标值
+// 思路：BST是一个左子树最大节点永远小于根节点，右子树所有的最小的节点大于根节点;
+// 方法一：使用中序遍历，找到最左节点后往上返回一次就计数一次，当count等于k就是目标值了;
+// 方法二：使用中序遍历求得遍历后的数组，然后get(k)即为目标值;
 public class Solution {
     int count = 0;
     int kCount;
@@ -895,27 +935,21 @@ next()和hasNext()的询问操作要求均摊时间复杂度是O(1)
 • 如果当前点不存在右子树，则是走到当前点的路径中，第一个左拐的点
 
 public class BSTIterator {
-    /*
-    * @param root: The root of binary tree.
-    */
+
     Stack<TreeNode> st = new Stack<>();
     TreeNode cur;
+
     public BSTIterator(TreeNode root) {
         // do intialization if necessary
         cur = root;
     }
 
-    /*
-     * @return: True if there has next node, or false
-     */
+
     public boolean hasNext() {
         // write your code here
         return cur != null || !st.empty();
     }
 
-    /*
-     * @return: return next node
-     */
     public TreeNode next() {
         // write your code here
         while(cur != null) {
@@ -1000,7 +1034,7 @@ public class Solution {
 
 // 思想：求出 lowerBound 和 upperBound。即 < target 的最大值和 >= target 的最小值。
 //      然后在两者之中去比较谁更接近，然后返回即可。（背）
-// 注意：时间复杂度为 O(h)O(h)，注意如果你使用 in-order traversal 的化，时间复杂度会是 o(n)o(n) 
+// 注意：时间复杂度为 O(h)O(h)，注意如果你使用 in-order traversal 的话，时间复杂度会是 o(n)o(n) 
 // 并不是最优的。另外复杂度也不是 O(logn)O(logn) 因为BST 并不保证树高是 logn 的。
 public class Solution {
     /**

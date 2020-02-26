@@ -828,3 +828,103 @@ class Solution {
         return min == Integer.MAX_VALUE ? -1 : min;
     }
 }
+
+302. 包含全部黑色像素的最小矩形
+图片在计算机处理中往往是使用二维矩阵来表示的。
+
+假设，这里我们用的是一张黑白的图片，那么 0 代表白色像素，1 代表黑色像素。
+
+其中黑色的像素他们相互连接，也就是说，图片中只会有一片连在一块儿的黑色像素（像素点是水平或竖直方向连接的）。
+
+那么，给出某一个黑色像素点 (x, y) 的位置，你是否可以找出包含全部黑色像素的最小矩形（与坐标轴对齐）的面积呢？
+
+
+
+示例:
+
+输入:
+[
+  "0010",
+  "0110",
+  "0100"
+]
+和 x = 0, y = 2
+
+输出: 6
+
+// 思路1：二分法，通过给定的目标点，以【0，x】这几列上以二分法寻找哪几行上存在1，如果存end = mid，否则start = mid
+// 思路2：使用bfs或者dfs求得， bfs其实就是相当于以给定这个点为中心点向外发散，遍历所有为1的节点同时记录下来x y 的最大和最小值
+//       作为上下左右界限最后求得面积
+class Coordination {
+    int x; 
+    int y;
+    public Coordination(int x, int y){
+        this.x = x;
+        this.y = y;
+    }
+}
+
+public class Solution {
+
+    private int length = 0; //行数
+    private int wide = 0; //列数
+    private int top = Integer.MAX_VALUE;
+    private int buttom = Integer.MIN_VALUE;
+    private int left = Integer.MAX_VALUE;
+    private int right = Integer.MIN_VALUE;
+
+     //四个方向
+    public int[] directionX = {0, 0, 1, -1};
+    public int[] directionY = {1, -1, 0, 0};
+
+    //判断坐标是否valid
+    private boolean inBound(int x, int y, char[][] grid) {
+        return x >= 0 && x < length && y >= 0 && y < wide && grid[x][y] == '1';
+    }
+
+
+    public int minArea(char[][] image, int x, int y) {
+
+        if (image == null || image.length == 0 || image[0].length == 0) {
+            return 0;
+        }
+        length = image.length; //行数
+        wide = image[0].length; //列数
+        top = x;
+        buttom = x;
+        left = y;
+        right = y;
+        bfsHelper(image, x, y);
+        return (right - left + 1) * (buttom - top + 1);
+    }
+
+    private void bfsHelper(char[][] image, int x, int y) {
+        Coordination coordination = new Coordination(x, y);
+        Queue<Coordination> queue = new LinkedList<>();
+        queue.offer(coordination);
+        while(!queue.isEmpty()) {
+            int size = queue.size();
+            for(int i = 0; i < size; i++) {
+                Coordination cur = queue.poll();
+                // 遍历所以值为‘1‘的点，记录下四个最值
+                top = Math.min(top, cur.x);
+                buttom = Math.max(buttom, cur.x);
+                left = Math.min(left, cur.y);
+                right = Math.max(right, cur.y);
+                for(int j = 0; j < 4; j++) {
+                    Coordination neighbor = new Coordination(
+                        cur.x + directionX[j],
+                        cur.y + directionY[j]
+                    );
+                    // 检查是否越界以及当前位置是否为1
+                    if (!inBound(neighbor.x, neighbor.y, image)) {
+                        continue;
+                    }
+                    // 将当前节点置为0
+                    image[neighbor.x][neighbor.y] = '0';
+                    queue.offer(neighbor);
+                }
+            }
+        }
+    }
+}

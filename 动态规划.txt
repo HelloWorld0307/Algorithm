@@ -69,7 +69,7 @@ class Solution {
 
  
 
-    // 自定向下
+    // 自顶向下
     private int helper(int [][] nums) {
         // 行数
         int rows = nums.length;
@@ -86,6 +86,7 @@ class Solution {
         for(int i = 1; i < colums; i++) {
             for(int j = 1; j < i; j++) {
                 // 注意求路径同时也需要加上当前元素的值
+		// 公式：可以到达当前节点[i][j] 的所有位置有dp[i - 1][j], dp[i - 1][j - 1]，从中找到一个最小值即是当前节点下最小路径和
                 dp[i][j] = nums[i][j] + Math.min(dp[i - 1][j], dp[i - 1][j - 1]);
             }
         }
@@ -233,7 +234,7 @@ class Solution {
         // 但是有一个特殊的情况，当在第一行的时候该行没有往上走的路径，只有往左走的节点，以及第一列没有左边的路径只有往上走
         // 这两列都需要特殊处理
 
-        // 处理第一列, 注意第一行和第一列有一个重复元素就是[0][0]，如果处理两次就会出问题
+        // 处理第一行, 注意第一行和第一列有一个重复元素就是[0][0]，如果处理两次就会出问题
         int sum = grid[0][0];
         int sum1 = grid[0][0];
         dp[0][0] = grid[0][0];
@@ -559,3 +560,59 @@ class Solution {
     }
 }
 
+
+474 零和一
+在计算机界中，我们总是追求用有限的资源获取最大的收益。
+
+现在，假设你分别支配着 m 个 0 和 n 个 1。另外，还有一个仅包含 0 和 1 字符串的数组。
+
+你的任务是使用给定的 m 个 0 和 n 个 1 ，找到能拼出存在于数组中的字符串的最大数量。每个 0 和 1 至多被使用一次。
+
+注意:
+
+给定 0 和 1 的数量都不会超过 100。
+给定字符串数组的长度不会超过 600。
+示例 1:
+
+输入: Array = {"10", "0001", "111001", "1", "0"}, m = 5, n = 3
+输出: 4
+
+//思路： 这道题和经典的背包问题很类似，不同的是在背包问题中，我们只有一种容量，而在这道题中，我们有 0 和 1 两种容量。
+// 每个物品（字符串）需要分别占用 0 和 1 的若干容量，并且所有物品的价值均为 1。因此我们可以使用二维的动态规划。
+
+// 我们用 dp(i, j) 表示使用 i 个 0 和 j 个 1，最多能拼出的字符串数目，那么状态转移方程为：
+// dp(i, j) = max(1 + dp(i - cost_zero[k], j - cost_one[k]))
+//     if i >= cost_zero[k] and j >= cost_one[k]
+// 其中 k 表示第 k 个字符串，cost_zero[k] 和 cost_one[k] 表示该字符串中 0 和 1 的个数。我们依次枚举这些字符串， 
+// 并根据状态转移方程更新所有的 dp(i, j)。注意由于每个字符串只能使用一次（即有限背包），因此在更新 dp(i, j) 时，i 和 j 都需要从大到小进行枚举。
+
+//注意： 背包的容量为 m个0， n个1的并集情况，所有物品即字符串是否可以放进去表示，字符串里面的0 和1的个数是比m 和 n小的
+class Solution {
+    public int findMaxForm(String[] strs, int m, int n) {
+        if(strs == null) return 0;
+        if(m == 0 && n == 0) return 0;
+        int [][]dp = new int[m + 1][n + 1];
+        for(String str : strs){
+            int [] count = countOneAndZero(str);
+            // count[0]为0的个数，count[1]为1的个数
+            for(int zero = m; zero >= count[0]; zero--){
+                for(int one = n; one >= count[1]; one--){
+                    // dp[zero][one] 表示前当有zero个0和one个1的时候，
+                    // 能放进去的最大值要么当前这个字符串str可以放进去，值为：1 + dp[zero - count[0]][one - count[1]], 
+                    // 放进去了原有的0 和 1的个数就要减去相应的数量
+                    // 当前字符串str不能放进去（字符串里的0和1数量大于zero或one）表示原有的字符串数量，即：dp[zero][one]数量不变
+                    dp[zero][one] = Math.max(1 + dp[zero - count[0]][one - count[1]], dp[zero][one]);
+                }
+            }
+        }
+        return dp[m][n];
+    }
+
+    public int[] countOneAndZero(String s) {
+        int[] c = new int[2];
+        for (int i = 0; i < s.length(); i++) {
+            c[s.charAt(i)-'0']++;
+        }
+        return c;
+    }
+}
